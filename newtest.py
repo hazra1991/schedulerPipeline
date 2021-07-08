@@ -1,3 +1,16 @@
+##Enhancements
+# TODO logging into a log file using the provided thread lock
+# TODO publish using lru_cache for faster and resuing the connections 
+
+##TO BE DISCUSSED 
+# TODO implement the scheduler and delay mechanish after dicsussion 
+# TODO implement yml config file for easier scheduler configuration
+# TBD :- the metric functions proper definition , the function should run per each indivisual customer one by one 
+# TBD :- the timezone info should be saved during registration for easiar calculations , an do the customer will have time choosing fasility 
+#======================================================
+
+
+
 def testfun(to,frm,sub):
 
     print(to,frm,sub)
@@ -8,17 +21,6 @@ def testfun2(to,frm,sub):
     print(to,frm,sub)
     print("=======func2========")
 
-def testfun3(to,frm,sub):
-
-    print(to,frm,sub)
-    print("======fun3=========")
-
-def testfun4(to,frm,sub):
-
-    print(to,frm,sub)
-    print("=====fun4==========")
-
-
 #### create DB connection ####
 from peewee import *
 
@@ -26,40 +28,41 @@ db = PostgresqlDatabase('patient', user='postgres', password='test123',host='127
 cur = db.execute_sql('select phone,username,timezone from patient')
 val = cur.fetchall()
 from pprint import pprint
-pprint(len(val))
-
 
 from Scheduler.manageworker import Manager
-from Scheduler.utils import produce
 c = Manager()
-# c.register(testfun4,testfun,testfun2,testfun3)
-co= 0
+
 for args in val:
-    co+=1
+    c.registerAndPublish(callback,1232423,delay=5000)
+    # c.registerAndPublish(testfun2,*args,delay=5000)
+    # c.registerAndPublish(testfun3,*args)
+    # c.registerAndPublish(testfun4,*args)
+    # break
 
-    # produce("testfun",*args)
-    # produce("testfun2",*args)
-    # produce("testfun3",*args)
-    # produce("testfun4",*args)
-    c.registerAndPublishJob(testfun,*args)
-    c.registerAndPublishJob(testfun2,*args)
-    c.registerAndPublishJob(testfun3,*args)
-    c.registerAndPublishJob(testfun4,*args)
-
-print(c._jobmapper)
-print(co)
 from threading import Thread
 from multiprocessing import Process
 # t1 = Process(target=c.startworker()).start()
-c.startworker(multiprocessing=True)
+try:
+    c.startworker(max_workers=1,multiprocessing=True)
 
-import time
-time.sleep(5)
+    import time
 
 
-# c.startworker()x
+
+    print("waiting")
+    time.sleep(10)
+except KeyboardInterrupt:
+    print("interupt=============================")
+    c.close_worker_Conenctions()
+
+# # c.startworker()x
 
 print('hi')
+# exit()
+
+# print('hellow')
+
+
 
 
 

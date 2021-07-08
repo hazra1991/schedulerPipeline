@@ -1,0 +1,45 @@
+RabbitMQ is a messaging queue service which is server based 
+
+can use Pika library to connect to the server and write publisher and consumer codes and set exchangeytpe in publisher 
+As per code and design :-
+        Pika connetces declare the exchange name ,type ,queue name ,properties etc as per requirement.
+
+        channel.exchange_declare(exchange='logs', exchange_type='fanout') to create name ref for a exchange type in RabbitMQ(can be used by any)
+        channel.queue_bind(exchange='logs', queue=queue_name)   - to bind the exchange (used by consumer mostly)
+        channel.queue_declare(queue='', exclusive=True)   - to create a queue,can be used by any 
+    Its not that the publisher code cannot use any Apis that is ments for the consumer , the Library is same its all about the design requirements 
+    
+API docs : - https://pika.readthedocs.io/en/stable/modules/adapters/blocking.html
+
+---------------------------- Explanation --------------------------
+                     ____________________________   
+producer ---------> |                            |              
+    or              |Exchange------ Q1           | -------------> concuser(1)
+publisher           |       |                    | ------------->consumer(2) 
+                    |       |                    | ....... --->consumer(n)
+                    |       |------- Q2          | 
+                    |                            |
+                    |____________________________|
+                    this is rabbit MQ server
+
+Exchange :--->
+---------------
+  * A exchange in RabbitMQ is a entity that defines in which queue the message should be places 
+  * the producer directly dont place the message in the queue using it places it in the Exchange and then the exchange is 
+    responsinble to place it in the proper Queue based on the routing info.
+   types of exchanges:
+
+    1. 'direct'    :-  by default if we specify '' then its direct .
+    2. 'topic'     :-  
+    3. 'headers' 
+    4. 'fanout' 
+  These exchange types defines the logic of message trancefer in RabbitMQ
+  external plugins can also be installed to exted the exchange scope
+
+NOTE:- to place it in a scpecific Queue we define a binding in the consuper code that directs the Excenge to place it in the Queue
+
+Publisher/producer :--->
+-------------------
+* This is written in code to publish the message to a specific exchange type and with a routing key(based on the exchange type and routing key exchange takes actions)
+* publisher sets the exchange name and exchange type (exchange name is used as a reference latter,default name can also be used by the rabbitMQ)
+* then it publishes the message using the exchange name ,routing key,properties and body to the exchange 
