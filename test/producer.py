@@ -10,24 +10,29 @@ def produce(*args,**kwargs):
 
         # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         connection ,channel =  connect()
+        if not connection.is_open and not channel.is_open:
+            connect.cache_clear()
+            connection ,channel =  connect()
+
 
         # channel = connection.channel()
-
+        # channel.queue_declare(queue='task-queue',durable=True)
+        # channel.exchange_declare('even-delay',exchange_type='x-delayed-message',durable=True,arguments={'x-delayed-type':'direct'})
 
         pr =  pika.BasicProperties(content_encoding='application/json',headers= headers,delivery_mode=2)
-        pk = pika.BasicProperties(content_encoding='application/json',headers= {'x-delay':60000},delivery_mode=2)
+        pk = pika.BasicProperties(content_encoding='application/json',headers= {'x-delay':4000},delivery_mode=2)
         channel.basic_publish(
         exchange="schedule-delay",
         routing_key='Default-key',
         body=json.dumps({"args":args,"kw":kwargs}),
         properties=pr
         )
-        channel.basic_publish(
-        exchange="schedule-delay",
-        routing_key='Default-key',
-        body=json.dumps({"args":args,"kw":kwargs}),
-        properties=pk
-        )
+        # channel.basic_publish(
+        # exchange="schedule-delay",
+        # routing_key='Default-key',
+        # body=json.dumps({"args":args,"kw":kwargs}),
+        # properties=pk
+        # )
         # print(" [x] Sent message !!!")
         # connection.close()
     except Exception as e:
@@ -41,7 +46,7 @@ def produce(*args,**kwargs):
 
 
 def fproduce():
-    for i in range(100):
+    for i in range(50000):
         produce()
     # import time
     # time.sleep(1)
@@ -52,7 +57,7 @@ from functools import lru_cache
 def connect():
     c = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     ch =  c.channel()
-    ch.queue_declare(queue='task-queue',durable=True)
+    # ch.queue_declare(queue='task-queue',durable=True)
     ch.exchange_declare('even-delay',exchange_type='x-delayed-message',durable=True,arguments={'x-delayed-type':'direct'})
     # print(c,ch)
     return c ,ch
@@ -60,17 +65,15 @@ def connect():
 # connect.cache_clear()
 
 
-fproduce()
-# import cProfile
-# import pstats
+# fproduce()
+import cProfile
+import pstats
 
-# with cProfile.Profile() as pr:
+with cProfile.Profile() as pr:
 
-#     fproduce()
+    fproduce()
 
-# stats = pstats.Stats(pr)
-# stats.sort_stats(pstats.SortKey.TIME)
-# stats.print_stats()
-
-# breakpoint()
-
+stats = pstats.Stats(pr)
+stats.sort_stats(pstats.SortKey.TIME)
+stats.print_stats()
+# 

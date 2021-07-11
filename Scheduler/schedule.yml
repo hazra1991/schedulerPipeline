@@ -1,0 +1,21 @@
+# modulename, the functions inside hte module or all the functions, date to be passed into the module or the data from,
+# rabbit MQ server to connect on (mandate), port,
+
+server:
+  host: localhost
+  port: 5243
+  worker-type: Thread/process
+
+
+stage-functions:
+  - testfun
+  - testfun2
+
+testfun:
+  origin:
+    module-name: newtest
+
+testfun2:
+  origin:
+    module-name:  newtest
+

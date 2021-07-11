@@ -1,20 +1,11 @@
 from .utils import consume,publish
 
-class CustomSetter:
-    '''defining a setter with no getters or deleter
-        @CustomeSetter
-        def myfun(self,val):
-            ........fun defination'''
 
-    def __init__(self,fun):
-        self.fun = fun
-
-    def __set__(self,obj,value):
-        ''' will define the setter bofy and call the self.fun with the value'''
-        pass
-
+################################
+#     Primary Manager class    # 
+################################
 class Manager:
-    
+
     __slots__ = ['_jobmapper',
                 '__workerlist',
                 '_W_connections',
@@ -26,13 +17,29 @@ class Manager:
                 '__all_exchange_types',
                 '__default_queue_name',
                 '__dead_queue_name',
-                '__routingkey']
+                '__routingkey',
+                'spawn_child',
+                'lock',
+                'Multiprocessing',
+                '__manager']
 
 
     def __init__(self,**kwargs):
-        self._jobmapper = dict()
+        self.Multiprocessing:bool = kwargs.pop('multiprocessing',False)
+        if self.Multiprocessing:
+            from multiprocessing import Manager as Mr
+            from multiprocessing import Process
+            self.__manager = Mr()
+            self._jobmapper = self.__manager.dict()
+            self.lock = self.__manager.Lock()
+            self.spawn_child = Process
+        else:
+            from threading import Thread ,Lock
+            self.lock = Lock()
+            self.spawn_child = Thread
+            self._jobmapper = dict()
+            self._W_connections = set()     # worker connections 
         self.__workerlist = set()
-        self._W_connections = set()     # worker connections 
         self.__workerstatus:bool = False
         self.__MQServer:str = kwargs.get('host','localhost')
         self.__exchange_name:str = 'schedule-delay'
@@ -47,27 +54,19 @@ class Manager:
         for fun in arg:
             self._jobmapper.setdefault(fun.__name__,fun)
     
-    def startworker(self,max_workers=4,multiprocessing = False):
+    def startworker(self,max_workers=4):
         if self.__workerstatus:
             self.stopProcess()
             raise RuntimeError('[*] Worker already scheduled for the object')
         self.__workerstatus = True
-        if multiprocessing:
-            from multiprocessing import Process,Lock
-            lock = Lock()
-            for num in range(max_workers):
-                p = Process(target=consume,args=(self,self.__MQServer,num,lock))
-                p.start()
-                self.__workerlist.add(p)
-                
-        else:
-            from threading import Thread ,Lock
-            lock = Lock()
-            for num in range(max_workers):
-                p = Thread(target=consume,args=(self,self.__MQServer,num,lock))
-                p.start()
-                self.__workerlist.add(p)
-
+        for num in range(max_workers):
+            p = self.spawn_child(target=consume,args=(self,self.__MQServer,num))
+            p.start()
+            self.__workerlist.add(p)
+        # if self.Multiprocessing:
+        #     self.join()
+        # TODO the shared memory will break as the main script will just deleter the manager object,hence the code will break
+        
         print("this is printing")
 
     def registerAndPublish(self,fun,*args,**kwargs):
@@ -92,15 +91,30 @@ class Manager:
             
     def stopProcess(self):
         print("[*] Stoping all execution")
+        if not self.Multiprocessing:
+            print(self.__workerlist)
+            self.close_worker_Conenctions()
+            return 
+            
         for worker in self.__workerlist:
             if worker.is_alive:
                 worker.terminate()
-    def close_worker_Conenctions(self):
-        for i in self._W_connections:
-            if i.is_open:
-                i.close()
-            self._W_connections.remove(i)
+                # worker.close()
+        self.__manager.shutdown()
+        self.join()
+        del self.__workerlist
+        return
 
+    def close_worker_Conenctions(self):
+        if self.Multiprocessing:
+            self.stopProcess()
+            return
+        for i in self._W_connections:
+            
+            if i.is_open:
+                print(i)
+                i.close()
+        del self._W_connections
 
     @property
     def exchange_name(self):
@@ -139,3 +153,22 @@ class Manager:
     @property
     def routingkey(self):
         return self.__routingkey
+
+
+
+######### pending #########
+
+class CustomSetter:
+
+    '''defining a setter with no getters or deleter
+        @CustomeSetter
+        def myfun(self,val):
+            ........fun defination'''
+
+    def __init__(self,fun):
+        self.fun = fun
+        raise NotImplementedError('Implementations not done ,work in progress')
+
+    def __set__(self,obj,value):
+        ''' will define the setter bofy and call the self.fun with the value'''
+        pass

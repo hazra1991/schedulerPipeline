@@ -1,0 +1,40 @@
+Multiprocessing will create multiple copies of the current code including all the mutable and immuatable date and each 
+process will have its own memory space and cannot interact with each other directly (as in case of multithreading)
+
+from multiprocessing import Process,Manager
+
+the Manager calss provides option to cerate shared space that can be used for sharing 
+
+manager = Manager()
+shared_dict =  manager.dict()
+shared_list = manager.list()
+namespace = manager.Namespace()
+
+namespace.newvar = list()
+print(namespace.newvar)
+[]
+
+if all the process are terminated the shared space created doesnot go away 
+
+manager.shutdown()
+
+imp links : - https://jaime-lin.medium.com/python-multiprocessing-manager-error-forkawarelocal-object-has-no-attribute-496009c94aed
+            https://www.semicolonworld.com/question/57274/how-does-multiprocessing-manager-work-in-python
+            https://docs.python.org/3/library/multiprocessing.shared_memory.html
+
+
+            sharing state: - 
+            https://docs.python.org/3/library/multiprocessing.html#sharing-state-between-processes
+
+================================
+VERY IMP  always Remember :---
+    how it works:
+        Creates a memory space outside the main process and teh child process and using pipes and sockes and serialization using
+        pickle the byte data is stored and transferd between processes.
+        hence its imp to unlink(),clean(),shutdown() that memory and release it to os again
+
+    while sharing memory the memory is created as a continuous block originally which donot support dinamic allocation like list 
+    to achive it the Manage class has implemeted pipes and sockets and connection that manages these spaces to store dyanmic data
+    HENCE :- they need  to serialize using pickle to transfer date into bytes and move across so any database connection,or any
+    network connections cannot be shared directly usingthis method  
+================================
