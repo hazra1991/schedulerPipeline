@@ -1,25 +1,24 @@
 from tools import CeleryTask
 
+#########################################
+# celelry application : dont change or delete
+
 celery_app = CeleryTask('Task-Scheduler')
 
+#########################################
 
-##### define tasks below #######
+##### define proxy tasks for you tasks below #######
 
 
-@celery_app.add_task_proxy
-# @celery_app.block_exe
-def proxy_task1():
-    from testfunfile import fun1
-    fun1()
+@celery_app.add_task(plug_to='schedule-tasks-from-DB')
+# @celery_app.block_exc
+def proxy_task1(*arg,**kw):
+    # from testfunfile import fun1
+    # fun1()
+    print(arg,kw)
 
 
 # @celery_app.add_logs
-@celery_app.add_task_proxy
-def proxy_task2(a,b,c,d):
-
-    print(a,b,c,d)
-    # from testfunfile import fun2
-    # fun2()
-
-
-
+@celery_app.add_task(plug_to="schedule-tasks-from-DB")
+def proxy_dummytask(*arg , **kw):
+    print(arg,kw)

@@ -5,11 +5,11 @@ config = {
     "task_serializer":"json",
     "result_serializer":'json',
     "accept_content":['json'],
-    # "timezone":'Europe/Dublin',
+    # "timezone":'',
     "enable_utc":True,
     "beat_schedule":{
-    "call-DB-at-12": {
-        'task': 'get-tasks',
+    "call-DB-and-schedule-task": {
+        'task': 'schedule-tasks-from-DB',
         'schedule': timedelta(seconds=5)
     },
     'every-10-sec':{

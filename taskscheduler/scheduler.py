@@ -1,29 +1,30 @@
 from datetime import timedelta,datetime
 from tasks import celery_app
 from celeryconfig import config
+from peewee import *
 
 ### update config ###
 celery_app.conf.update(config)
 
 
-time = datetime.utcnow() + timedelta(seconds=30)
-
 
 ##### define heart beet tasks ########
-@celery_app.task(name='get-tasks')
-def get_():
-    print('it is returned')
 
-@celery_app.task(name='display')
-def display():
+@celery_app.create_beat(name='schedule-tasks-from-DB')
+def get_data_and_schedule_call():
+    db = PostgresqlDatabase('patient', user='postgres', password='test123',host='127.0.0.1',port=5432)
+    cur = db.execute_sql('select phone,username,timezone from patient')
+    val = cur.fetchall()
+    plugged_task_list =celery_app.get_plugged_tasklist()
+
+    time = datetime.utcnow() + timedelta(seconds=30)
+
+    for i in val:
+        for t_name ,task in plugged_task_list.items():
+            task.apply_async(args=(i,),eta=time)
+
+
+@celery_app.create_beat(name='display')
+def dis():
     print('display')
-
-
-# # testfunfile.fun1.apply_async(args=(12,),eta =datetime.utcnow() + timedelta(seconds=30))
-# import time as t
-
-# # t.sleep(10)
-# for i in range(3):
-#     # fun1.apply_async(args=(12,),eta=time)
-#     print('dasdasd')
-#     pass
+    celery_app.get_plugged_tasklist()
