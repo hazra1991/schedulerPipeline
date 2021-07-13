@@ -1,6 +1,6 @@
 from datetime import timedelta,datetime
-from tasks import celery_app
-from celeryconfig import config
+from .tasks import celery_app
+from .celeryconfig import config
 from peewee import *
 
 ### update config ###
@@ -17,7 +17,7 @@ def get_data_and_schedule_call():
     val = cur.fetchall()
     plugged_task_list =celery_app.get_plugged_tasklist()
 
-    time = datetime.utcnow() + timedelta(seconds=30)
+    time = datetime.utcnow() + timedelta(seconds=7)
 
     for i in val:
         for t_name ,task in plugged_task_list.items():
