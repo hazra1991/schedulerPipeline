@@ -17,6 +17,8 @@ The application structure is implemented by inheriting and customizing celery ta
 * Tasks should act as a proxy to the real function needed to be called. instruction below 
 * task functions should contain the 'proxy_' prefix.
 
+#### Recomended to add the project folder to the PYTHONPATH for proper importing and defining of tasks
+
 -> Example
 tasks.py
 ```
